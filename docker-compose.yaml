@@ -1,12 +1,21 @@
+volumes:
+  cal-dat:
+
+networks:
+  stack:
+    name: stack
+    external: false
+
 services:
   database:
     container_name: database
     image: postgres
     restart: always
     volumes:
-      - database-data:/var/lib/postgresql/data/
+      - cal-dat:/var/lib/postgresql/data/
+    env_file: .env
     networks:
-      - caddy2_managed
+      - stack
 
   calcom:
     image: calcom.docker.scarf.sh/calcom/cal.com
@@ -24,12 +33,13 @@ services:
         CALENDSO_ENCRYPTION_KEY: ${CALENDSO_ENCRYPTION_KEY}
         DATABASE_URL: ${DATABASE_URL}
         DATABASE_DIRECT_URL: ${DATABASE_URL}
-      network: caddy2_managed
+      network: stack
     restart: always
     networks:
-      - caddy2_managed
+      - stack
     ports:
       - 3000:3000
+    env_file: .env
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${DATABASE_HOST}/${POSTGRES_DB}
       - DATABASE_DIRECT_URL=${DATABASE_URL}
@@ -41,9 +51,10 @@ services:
     image: calcom.docker.scarf.sh/calcom/cal.com
     restart: always
     networks:
-      - caddy2_managed
+      - stack
     ports:
       - 5555:5555
+    env_file: .env
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${DATABASE_HOST}/${POSTGRES_DB}
       - DATABASE_DIRECT_URL=${DATABASE_URL}
@@ -54,11 +65,3 @@ services:
       - prisma
       - studio
 # END SECTION: Optional use of Prisma Studio.
-
-volumes:
-  cal-dat:
-
-networks:
-  default:
-    external: true
-    name: caddy2_managed
